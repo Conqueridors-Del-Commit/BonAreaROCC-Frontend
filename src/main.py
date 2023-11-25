@@ -17,6 +17,7 @@ radius = 450
 multi = 0.60
 speed_multipliers = [-500, -100, -10, -1, 1, 10, 100, 500, 1000]
 speed_mult_index = 4
+table_scroll = 0
 
 
 def convert_to_datetime(date_string):
@@ -46,15 +47,21 @@ def read_path_csv(filename):
             movements = []
             picking = []
             timestamps = []
+
+            total_articles = []
             for r in reader:
                 if r['customer_id'] == customer_id:
+                    ticket_id = r['ticket_id']
                     movements.append((int(r['x']), int(r['y'])))
                     if r['picking'] == '1':
+                        if (int(r['x']), int(r['y'])) not in total_articles:
+                            total_articles.append((int(r['x']), int(r['y'])))
                         picking.append(True)
                     else:
                         picking.append(False)
                     timestamps.append(convert_to_datetime(r['x_y_date_time']))
-            customers.append(Customer(movements, picking, timestamps))
+            customers.append(
+                Customer(customer_id, ticket_id, movements, picking, timestamps, total_articles=len(total_articles)))
     return customers
 
 
@@ -158,6 +165,11 @@ def graphics_procedure(store_map):
                     (customer.current_pick_x * SQUARE_SIZE, SQUARE_SIZE * 3, customer.current_pick_y * SQUARE_SIZE),
                     (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE),
                     (0.0, 1.0, 0.0))
+                draw_prism(
+                    (customer.current_pick_x * SQUARE_SIZE + math.floor(SQUARE_SIZE / 4), 0,
+                     customer.current_pick_y * SQUARE_SIZE + math.floor(SQUARE_SIZE / 4)),
+                    (math.floor(SQUARE_SIZE / 2), SQUARE_SIZE * 3, math.floor(SQUARE_SIZE / 2)),
+                    (0.0, 1.0, 0.0))
 
     glLoadIdentity()
 
@@ -188,16 +200,26 @@ def graphics_procedure(store_map):
     draw_header("Nº Tiquet", (100, -200), True)
     draw_header("Cantidad de artículos", (200, -200), True)
 
-    for i, customer in enumerate(customers_data):
+    for i, customer in enumerate(customers_data[table_scroll:]):
         # 4 estats: Espera, En Ruta, Picking, Completat
         if not customer.active and not customer.completed:
-            draw_table_text("Espera", (-470, -210 - 20 * (i + 1)))
+            draw_semaphore((-470, -210 - 20 * (i + 1)), (240, 76, 70))
+            draw_table_text("Espera", (-440, -210 - 20 * (i + 1)))
         elif not customer.active:
-            draw_table_text("Completado", (-470, -210 - 20 * (i + 1)))
+            draw_semaphore((-470, -210 - 20 * (i + 1)), (27, 227, 110))
+            draw_table_text("Completo", (-440, -210 - 20 * (i + 1)))
         elif customer.active and customer.picking_rn:
-            draw_table_text("Picking", (-470, -210 - 20 * (i + 1)))
+            draw_semaphore((-470, -210 - 20 * (i + 1)), (255, 225, 83))
+            draw_table_text("Picking", (-440, -210 - 20 * (i + 1)))
         elif customer.active and not customer.picking_rn:
-            draw_table_text("En ruta", (-470, -210 - 20 * (i + 1)))
+            draw_semaphore((-470, -210 - 20 * (i + 1)), (39, 158, 242))
+            draw_table_text("En ruta", (-440, -210 - 20 * (i + 1)))
+        draw_table_text(customer.customer_id, (-350, -210 - 20 * (i + 1)))
+        draw_table_text(customer.timestamps[0].strftime("%H:%M:%S"), (-250, -210 - 20 * (i + 1)))
+        draw_table_text(customer.timestamps[-1].strftime("%H:%M:%S"), (-120, -210 - 20 * (i + 1)))
+        draw_table_text(str(customer.timestamps[-1] - customer.timestamps[0])[:8], (0, -210 - 20 * (i + 1)))
+        draw_table_text(customer.ticket_id, (100, -210 - 20 * (i + 1)))
+        draw_table_text(f"{customer.picked_articles} ({customer.total_articles})", (200, -210 - 20 * (i + 1)))
 
 
 def displayFunc():
@@ -224,7 +246,7 @@ def displayFunc():
 
 
 def keyboardFunc(key, x, y):
-    global alpha_angle, beta_angle, multi, speed_mult_index
+    global alpha_angle, beta_angle, multi, speed_mult_index, table_scroll, customers_data
     t = key.decode()
     if t == "w":
         beta_angle = min(80.0, beta_angle + 5)
@@ -234,10 +256,13 @@ def keyboardFunc(key, x, y):
         alpha_angle = (alpha_angle + 5) % 360.0
     elif t == "d":
         alpha_angle = (alpha_angle - 5) % 360.0
-    # elif t == "e":
-    #     multi = max(0.45, multi - 0.05)
-    # elif t == "q":
-    #    multi = min(0.75, multi + 0.05)
+    elif t == "e":
+        if len(customers_data) > 8:
+            table_scroll = min(len(customers_data) - 8, table_scroll + 1)
+        else:
+            pass
+    elif t == "q":
+        table_scroll = max(0, table_scroll - 1)
     elif t == "z":
         speed_mult_index = max(0, speed_mult_index - 1)
     elif t == "c":
@@ -270,11 +295,15 @@ def idleFunc():
                         customer.current_x = customer.movements[i][0]
                         customer.current_y = customer.movements[i][1]
                         if customer.picking[i]:
+                            if not customer.picking_rn and speed_multipliers[speed_mult_index] > 0:
+                                customer.picked_articles += 1
                             customer.picking_rn = True
                             customer_node = store_map.get_node_by_coordinates(customer.current_x, customer.current_y)
                             customer.current_pick_x = customer_node.picking_neighbour_x
                             customer.current_pick_y = customer_node.picking_neighbour_y
                         else:
+                            if customer.picking_rn and speed_multipliers[speed_mult_index] < 0:
+                                customer.picked_articles -= 1
                             customer.picking_rn = False
                         break
                 else:

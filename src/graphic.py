@@ -160,6 +160,14 @@ def draw_text(text, position, bold=False):
     glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
 
 
+def draw_semaphore(position, color, bold=False):
+    font = pygame.font.SysFont("Arial", 16, bold)
+    text_surface = font.render("     ", True, color, color)
+    text_data = pygame.image.tostring(text_surface, "RGBA", True)
+    glRasterPos2d(*position)
+    glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+
 def draw_table_text(text, position, bold=False):
     font = pygame.font.SysFont("Arial", 16, bold)
     text_surface = font.render(text, True, (0, 0, 0), (255, 255, 255))

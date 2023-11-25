@@ -3,9 +3,14 @@ import dataclasses
 
 @dataclasses.dataclass
 class Customer:
+    customer_id: str
+    ticket_id: str
     movements: []
     picking: []
     timestamps: []
+
+    picked_articles: int = 0
+    total_articles: int = 0
 
     current_x: int = 0
     current_y: int = 0
