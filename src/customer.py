@@ -14,6 +14,7 @@ class Customer:
     destination_y: int = 0
 
     active = False
+    completed = False
 
     picking_rn = False
     current_pick_x: int = 0

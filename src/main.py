@@ -14,9 +14,9 @@ from OpenGL.GLUT import *
 alpha_angle = 45.0
 beta_angle = 30.0
 radius = 450
-multi = 0.55
-speed_multipliers = [1, 10, 100, 500]
-speed_mult_index = 0
+multi = 0.60
+speed_multipliers = [-500, -100, -10, -1, 1, 10, 100, 500, 1000]
+speed_mult_index = 4
 
 
 def convert_to_datetime(date_string):
@@ -141,7 +141,8 @@ def graphics_procedure(store_map):
                 color = (0.9, 0.9, 0.9)
                 height = 0
             if height != 0:
-                draw_prism((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
+                draw_prism((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
+                           (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
                            color)
             else:
                 draw_rectangle((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, 0, SQUARE_SIZE),
@@ -159,15 +160,51 @@ def graphics_procedure(store_map):
                     (0.0, 1.0, 0.0))
 
     glLoadIdentity()
+
     word = current_time.strftime('%Y-%m-%d %H:%M:%S')
-    draw_text(word, (-400, 300))
+    draw_text(word, (-400, 300), True)
+    draw_text("Speed: ", (320, 300))
+    draw_text(f"{speed_multipliers[speed_mult_index]}x", (400, 300), True)
+
+    # Dibuixar la table
+    glLoadIdentity()
+    # glPushMatrix()
+    # glTranslatef(XOFFSET, 0, ZOFFSET)
+    # glRotatef(-90.0, 1.0, 0.0, 0.0)
+    # glRotatef(90.0 - alpha_angle, 0.0, 0.0, 1.0)
+    # glScalef(0.5, 0.5, 0.5)
+    # glTranslatef(-105 * 0.5, 0.0, 0.0)
+    # glTranslatef(0.0, 0.0, 100.0)
+    # glRotatef(90 - beta_angle, 1.0, 0.0, 0.0)
+    draw_prism((0, -470, 180), (1200, 300, 20), (0.2, 0.2, 0.2))
+    draw_prism((0, -510, 200), (1200, 300, 20), (1.0, 1.0, 1.0))
+    # glPopMatrix()
+
+    draw_header("Estado Ruta", (-470, -200), True)
+    draw_header("Nº Cliente", (-350, -200), True)
+    draw_header("Hora Entrada", (-250, -200), True)
+    draw_header("Hora Salida", (-120, -200), True)
+    draw_header("Duración", (0, -200), True)
+    draw_header("Nº Tiquet", (100, -200), True)
+    draw_header("Cantidad de artículos", (200, -200), True)
+
+    for i, customer in enumerate(customers_data):
+        # 4 estats: Espera, En Ruta, Picking, Completat
+        if not customer.active and not customer.completed:
+            draw_table_text("Espera", (-470, -210 - 20 * (i + 1)))
+        elif not customer.active:
+            draw_table_text("Completado", (-470, -210 - 20 * (i + 1)))
+        elif customer.active and customer.picking_rn:
+            draw_table_text("Picking", (-470, -210 - 20 * (i + 1)))
+        elif customer.active and not customer.picking_rn:
+            draw_table_text("En ruta", (-470, -210 - 20 * (i + 1)))
 
 
 def displayFunc():
     global store_map, alpha_angle, beta_angle, multi, radius
     idleFunc()
 
-    glClearColor(0.15, 0.15, 0.15, 0.0)
+    glClearColor(0.54, 0.8, 0.98, 0.0)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
@@ -197,25 +234,29 @@ def keyboardFunc(key, x, y):
         alpha_angle = (alpha_angle + 5) % 360.0
     elif t == "d":
         alpha_angle = (alpha_angle - 5) % 360.0
-    elif t == "e":
-        multi = max(0.45, multi - 0.05)
-    elif t == "q":
-        multi = min(0.75, multi + 0.05)
+    # elif t == "e":
+    #     multi = max(0.45, multi - 0.05)
+    # elif t == "q":
+    #    multi = min(0.75, multi + 0.05)
     elif t == "z":
         speed_mult_index = max(0, speed_mult_index - 1)
     elif t == "c":
-        speed_mult_index = min(3, speed_mult_index + 1)
+        speed_mult_index = min(len(speed_multipliers) - 1, speed_mult_index + 1)
+    elif t == "x":
+        speed_mult_index = 4
 
 
 def idleFunc():
     global current_time, last_update, customers_data, store_map
     elapsed_ms = glutGet(GLUT_ELAPSED_TIME)
     elapsed_time = elapsed_ms - last_update
-    if elapsed_time > (1000 / speed_multipliers[speed_mult_index]):
+    if elapsed_time > abs(1000 / speed_multipliers[speed_mult_index]):
         last_update = elapsed_ms
-        for _ in range(math.floor(elapsed_time / (1000 / speed_multipliers[speed_mult_index]))):
-            current_time = current_time + timedelta(seconds=1)
-            print(current_time)
+        for _ in range(math.floor(elapsed_time / abs(1000 / speed_multipliers[speed_mult_index]))):
+            if speed_multipliers[speed_mult_index] < 0:
+                current_time = current_time - timedelta(seconds=1)
+            else:
+                current_time = current_time + timedelta(seconds=1)
             t2 = (
                 current_time.year, current_time.month, current_time.day, current_time.hour, current_time.minute,
                 current_time.second)
@@ -237,6 +278,9 @@ def idleFunc():
                             customer.picking_rn = False
                         break
                 else:
+                    if customer.active:
+                        customer.active = False
+                        customer.completed = True
                     customer.active = False
 
 

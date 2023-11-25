@@ -17,8 +17,8 @@ from pyglet.gl import *
 
 WIDTH, HEIGHT = 800, 600
 SQUARE_SIZE = 20
-XOFFSET = math.floor(47 * SQUARE_SIZE / 2)
-ZOFFSET = math.floor(20 * SQUARE_SIZE / 2)
+XOFFSET = math.floor(47 * SQUARE_SIZE / 2) + 100
+ZOFFSET = math.floor(20 * SQUARE_SIZE / 2) + 100
 
 
 def darker_color(color):
@@ -152,9 +152,43 @@ def load_texture(filename):
     return texture_id
 
 
-def draw_text(text, position):
-    font = pygame.font.SysFont("Arial", 16, True)
-    text_surface = font.render(text, True, (255, 255, 255), (0, 0, 0))
+def draw_text(text, position, bold=False):
+    font = pygame.font.SysFont("Arial", 16, bold)
+    text_surface = font.render(text, True, (255, 255, 255), (140, 208, 252))
+    text_data = pygame.image.tostring(text_surface, "RGBA", True)
+    glRasterPos2d(*position)
+    glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+
+def draw_table_text(text, position, bold=False):
+    font = pygame.font.SysFont("Arial", 16, bold)
+    text_surface = font.render(text, True, (0, 0, 0), (255, 255, 255))
+    text_data = pygame.image.tostring(text_surface, "RGBA", True)
+    glRasterPos2d(*position)
+    glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+
+def draw_rectangle_2d(sizex, sizey, position):
+    glColor3f(1.0, 1.0, 1.0)  # Set color to white
+    glBegin(GL_QUADS)
+    glVertex2f(position[0], position[1])  # Top-left corner
+    glVertex2f(position[0], position[1] - sizey)  # Bottom-left corner
+    glVertex2f(position[0] + sizex, position[1] - sizey)  # Bottom-right corner
+    glVertex2f(position[0] + sizex, position[1])  # Top-right corner
+    glEnd()
+
+
+def draw_rectangle_test(width, height, position):
+    surface = pygame.Surface((800, 600))
+    pygame.draw.rect(surface, (0, 0, 0), (position[0], position[1], width, height))
+    text_data = pygame.image.tostring(surface, "RGBA", True)
+    glRasterPos2d(*position)
+    glDrawPixels(surface.get_width(), surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+
+def draw_header(text, position, bold=False):
+    font = pygame.font.SysFont("Arial", 16, bold)
+    text_surface = font.render(text, True, (255, 255, 255), (51, 51, 51))
     text_data = pygame.image.tostring(text_surface, "RGBA", True)
     glRasterPos2d(*position)
     glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
