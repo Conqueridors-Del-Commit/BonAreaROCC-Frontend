@@ -159,20 +159,8 @@ def graphics_procedure(store_map):
                     (0.0, 1.0, 0.0))
 
     glLoadIdentity()
-    # glPushMatrix()
     word = current_time.strftime('%Y-%m-%d %H:%M:%S')
-    # glTranslatef(XOFFSET, 0, ZOFFSET)
-    # glRotatef(-90.0, 1.0, 0.0, 0.0)
-    # glRotatef(90.0 - alpha_angle, 0.0, 0.0, 1.0)
-    # glScalef(0.5, 0.5, 0.5)
-    # glTranslatef(-105 * 0.5 * len(word), 0.0, 0.0)
-    # glTranslatef(0.0, 0.0, 100.0)
-    # glRotatef(90 - beta_angle, 1.0, 0.0, 0.0)
-    # for c in word:
-    #     glColor3f(1.0, 1.0, 1.0)
-    #     glutStrokeCharacter(OpenGL.GLUT.fonts, c)
-    # glPopMatrix()
-    draw_text(word, (-1, 1))
+    draw_text(word, (-400, 300))
 
 
 def displayFunc():
