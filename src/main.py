@@ -1,6 +1,8 @@
 import csv
 from datetime import datetime, timedelta
 
+import OpenGL.GLUT.fonts
+
 import map
 from graphic import *
 from customer import *
@@ -12,7 +14,7 @@ from OpenGL.GLUT import *
 alpha_angle = 45.0
 beta_angle = 30.0
 radius = 450
-multi = 0.45
+multi = 0.55
 speed_multipliers = [1, 10, 100, 500]
 speed_mult_index = 0
 
@@ -115,7 +117,7 @@ def write_store_map(store_map: map.Map):
 
 
 def graphics_procedure(store_map):
-    global customers_data
+    global customers_data, current_time
     for x in range(1, store_map.height + 1):
         for y in range(1, store_map.width + 1):
             node = store_map.get_node_by_coordinates(x, y)
@@ -151,11 +153,26 @@ def graphics_procedure(store_map):
                        (0.0, 0.0, 1.0))
         if customer.picking_rn:
             if customer.active:
-                draw_prism((customer.current_pick_x * SQUARE_SIZE, SQUARE_SIZE*3, customer.current_pick_y * SQUARE_SIZE),
-                           (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE),
-                           (0.0, 1.0, 0.0))
+                draw_prism(
+                    (customer.current_pick_x * SQUARE_SIZE, SQUARE_SIZE * 3, customer.current_pick_y * SQUARE_SIZE),
+                    (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE),
+                    (0.0, 1.0, 0.0))
 
     glLoadIdentity()
+    # glPushMatrix()
+    word = current_time.strftime('%Y-%m-%d %H:%M:%S')
+    # glTranslatef(XOFFSET, 0, ZOFFSET)
+    # glRotatef(-90.0, 1.0, 0.0, 0.0)
+    # glRotatef(90.0 - alpha_angle, 0.0, 0.0, 1.0)
+    # glScalef(0.5, 0.5, 0.5)
+    # glTranslatef(-105 * 0.5 * len(word), 0.0, 0.0)
+    # glTranslatef(0.0, 0.0, 100.0)
+    # glRotatef(90 - beta_angle, 1.0, 0.0, 0.0)
+    # for c in word:
+    #     glColor3f(1.0, 1.0, 1.0)
+    #     glutStrokeCharacter(OpenGL.GLUT.fonts, c)
+    # glPopMatrix()
+    draw_text(word, (-1, 1))
 
 
 def displayFunc():

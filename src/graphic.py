@@ -5,6 +5,11 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 
+import pygame
+from pygame.locals import *
+
+import numpy as np
+
 from PIL import Image
 
 import pyglet
@@ -136,36 +141,29 @@ def draw_rectangle(coordinates, size, color):
 
 def load_texture(filename):
     img = Image.open(filename)
-    img_data = img.tobytes("raw", "RGB", 0, -1)
+    img_data = np.array(list(img.getdata()), np.uint8)
+    texture_id = glGenTextures(1, img_data)
 
-    width, height = img.size
-
-    texture_id = glGenTextures(1)
     glBindTexture(GL_TEXTURE_2D, texture_id)
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
-
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-
-    glTexImage2D(
-        GL_TEXTURE_2D,
-        0,
-        GL_RGB,
-        width,
-        height,
-        0,
-        GL_RGB,
-        GL_UNSIGNED_BYTE,
-        img_data,
-    )
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, img.width, img.height, 0, GL_RGB, GL_UNSIGNED_BYTE, img_data)
 
     return texture_id
 
 
+def draw_text(text, position):
+    font = pygame.font.SysFont("Arial", 16, True)
+    text_surface = font.render(text, True, (255, 255, 255), (0, 0, 0))
+    text_data = pygame.image.tostring(text_surface, "RGBA", True)
+    glRasterPos2d(*position)
+    glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
+
+
 def init_graphics():
     glutInit()
+    pygame.init()
+    pygame.font.init()
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH)
     glutInitWindowSize(WIDTH, HEIGHT)
     glutInitWindowPosition(0, 0)
