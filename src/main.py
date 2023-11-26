@@ -70,7 +70,6 @@ def read_path_csv(filename):
                         min_datetime = dt
             color_index = random.randint(0, len(colors_list_normalised) - 1)
             color = colors_list_normalised[color_index]
-            colors_list_normalised.pop(color_index)
             customers.append(Customer(customer_id,
                                       ticket_id,
                                       movements,
