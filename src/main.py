@@ -36,6 +36,7 @@ def convert_to_datetime(date_string):
 
 
 def read_path_csv(filename):
+    min_datetime = None
     with open(filename, "r", errors="ignore", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter=";")
         distinct_customers = []
@@ -63,7 +64,10 @@ def read_path_csv(filename):
                         picking.append(True)
                     else:
                         picking.append(False)
-                    timestamps.append(convert_to_datetime(r['x_y_date_time']))
+                    dt = convert_to_datetime(r['x_y_date_time'])
+                    timestamps.append(dt)
+                    if min_datetime is None or dt < min_datetime:
+                        min_datetime = dt
             color_index = random.randint(0, len(colors_list_normalised) - 1)
             color = colors_list_normalised[color_index]
             colors_list_normalised.pop(color_index)
@@ -74,7 +78,7 @@ def read_path_csv(filename):
                                       timestamps,
                                       total_articles=len(total_articles),
                                       color=color))
-    return customers
+    return customers, min_datetime
 
 
 def read_representation_csv(filename):
@@ -372,12 +376,12 @@ def idleFunc():
 
 
 if __name__ in "__main__":
-    customers_data = read_path_csv(sys.argv[1])
+    customers_data, min_dt = read_path_csv(sys.argv[1])
     store_map = read_store_csv('planogram_utf.csv')
     read_representation_csv('planogram_to_representation.csv')
     t = 0
     last_update = 0
-    current_time = convert_to_datetime('2023-11-02 09:00:00')
+    current_time = min_dt.replace(hour=9, minute=0, second=0, microsecond=0)
     # write_store_map(store_map)
     init_graphics()
     glutDisplayFunc(displayFunc)
