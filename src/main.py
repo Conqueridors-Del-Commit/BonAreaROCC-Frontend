@@ -18,6 +18,7 @@ multi = 0.60
 speed_multipliers = [-500, -100, -10, -1, 1, 10, 100, 500, 1000]
 speed_mult_index = 4
 table_scroll = 0
+pause = False
 
 
 def convert_to_datetime(date_string):
@@ -157,7 +158,7 @@ def graphics_procedure(store_map):
     for customer in customers_data:
         if customer.active:
             draw_prism((customer.current_x * SQUARE_SIZE, 0, customer.current_y * SQUARE_SIZE),
-                       (SQUARE_SIZE, math.ceil(SQUARE_SIZE * 1.5), SQUARE_SIZE),
+                       (SQUARE_SIZE, math.ceil(SQUARE_SIZE * 2), SQUARE_SIZE),
                        (0.0, 0.0, 1.0))
         if customer.picking_rn:
             if customer.active:
@@ -171,6 +172,41 @@ def graphics_procedure(store_map):
                     (math.floor(SQUARE_SIZE / 2), SQUARE_SIZE * 3, math.floor(SQUARE_SIZE / 2)),
                     (0.0, 1.0, 0.0))
 
+    # Drawing paths
+    for customer in customers_data:
+        if not customer.active:
+            continue
+        for i, timestamp in enumerate(customer.timestamps[:-1]):
+            if customer.timestamps[i + 1] <= current_time:
+                color = (0.1, 0.89, 0.43)
+            else:
+                color = (0.15, 0.61, 0.94)
+            movement = customer.movements[i]
+            next_movement = customer.movements[i + 1]
+            if movement[1] < next_movement[1]:
+                draw_prism(
+                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
+                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                    (math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE),
+                    color)
+            elif movement[1] > next_movement[1]:
+                draw_prism(
+                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
+                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4) - SQUARE_SIZE),
+                    (math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                    color)
+            elif movement[0] < next_movement[0]:
+                draw_prism(
+                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
+                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                    (SQUARE_SIZE, math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4)),
+                    color)
+            elif movement[0] > next_movement[0]:
+                draw_prism(
+                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4) - SQUARE_SIZE, SQUARE_SIZE,
+                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                    (SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4)),
+                    color)
     glLoadIdentity()
 
     word = current_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -180,17 +216,8 @@ def graphics_procedure(store_map):
 
     # Dibuixar la table
     glLoadIdentity()
-    # glPushMatrix()
-    # glTranslatef(XOFFSET, 0, ZOFFSET)
-    # glRotatef(-90.0, 1.0, 0.0, 0.0)
-    # glRotatef(90.0 - alpha_angle, 0.0, 0.0, 1.0)
-    # glScalef(0.5, 0.5, 0.5)
-    # glTranslatef(-105 * 0.5, 0.0, 0.0)
-    # glTranslatef(0.0, 0.0, 100.0)
-    # glRotatef(90 - beta_angle, 1.0, 0.0, 0.0)
     draw_prism((0, -470, 180), (1200, 300, 20), (0.2, 0.2, 0.2))
     draw_prism((0, -510, 200), (1200, 300, 20), (1.0, 1.0, 1.0))
-    # glPopMatrix()
 
     draw_header("Estado Ruta", (-470, -200), True)
     draw_header("Nº Cliente", (-350, -200), True)
@@ -246,7 +273,7 @@ def displayFunc():
 
 
 def keyboardFunc(key, x, y):
-    global alpha_angle, beta_angle, multi, speed_mult_index, table_scroll, customers_data
+    global alpha_angle, beta_angle, multi, speed_mult_index, table_scroll, customers_data, pause
     t = key.decode()
     if t == "w":
         beta_angle = min(80.0, beta_angle + 5)
@@ -269,12 +296,17 @@ def keyboardFunc(key, x, y):
         speed_mult_index = min(len(speed_multipliers) - 1, speed_mult_index + 1)
     elif t == "x":
         speed_mult_index = 4
+    elif t == "p":
+        pause = not pause
 
 
 def idleFunc():
     global current_time, last_update, customers_data, store_map
     elapsed_ms = glutGet(GLUT_ELAPSED_TIME)
     elapsed_time = elapsed_ms - last_update
+    if pause:
+        last_update = elapsed_ms
+        return None
     if elapsed_time > abs(1000 / speed_multipliers[speed_mult_index]):
         last_update = elapsed_ms
         for _ in range(math.floor(elapsed_time / abs(1000 / speed_multipliers[speed_mult_index]))):
