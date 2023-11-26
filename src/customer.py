@@ -8,6 +8,7 @@ class Customer:
     movements: []
     picking: []
     timestamps: []
+    color: []
 
     picked_articles: int = 0
     total_articles: int = 0

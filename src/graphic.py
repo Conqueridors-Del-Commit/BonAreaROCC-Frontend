@@ -20,6 +20,19 @@ SQUARE_SIZE = 20
 XOFFSET = math.floor(47 * SQUARE_SIZE / 2) + 100
 ZOFFSET = math.floor(20 * SQUARE_SIZE / 2) + 100
 
+colors_list_rgb = [
+    (182, 220, 118),
+    (243, 154, 153),
+    (243, 182, 31),
+    (187, 216, 179,),
+    (81, 13, 10),
+    (34, 116, 165),
+    (213, 87, 59),
+    (45, 225, 194)
+]
+
+colors_list_normalised = [tuple([c / 255.0 for c in cl]) for cl in colors_list_rgb]
+
 
 def darker_color(color):
     r, g, b = color
@@ -168,9 +181,9 @@ def draw_semaphore(position, color, bold=False):
     glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)
 
 
-def draw_table_text(text, position, bold=False):
+def draw_table_text(text, position, color=(0, 0, 0), background=(255, 255, 255), bold=False):
     font = pygame.font.SysFont("Arial", 16, bold)
-    text_surface = font.render(text, True, (0, 0, 0), (255, 255, 255))
+    text_surface = font.render(text, True, (0, 0, 0), background)
     text_data = pygame.image.tostring(text_surface, "RGBA", True)
     glRasterPos2d(*position)
     glDrawPixels(text_surface.get_width(), text_surface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, text_data)

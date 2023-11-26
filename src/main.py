@@ -1,4 +1,5 @@
 import csv
+import random
 from datetime import datetime, timedelta
 
 import OpenGL.GLUT.fonts
@@ -61,8 +62,16 @@ def read_path_csv(filename):
                     else:
                         picking.append(False)
                     timestamps.append(convert_to_datetime(r['x_y_date_time']))
-            customers.append(
-                Customer(customer_id, ticket_id, movements, picking, timestamps, total_articles=len(total_articles)))
+            color_index = random.randint(0, len(colors_list_normalised))
+            color = colors_list_normalised[color_index]
+            colors_list_normalised.pop(color_index)
+            customers.append(Customer(customer_id,
+                                      ticket_id,
+                                      movements,
+                                      picking,
+                                      timestamps,
+                                      total_articles=len(total_articles),
+                                      color=color))
     return customers
 
 
@@ -159,7 +168,7 @@ def graphics_procedure(store_map):
         if customer.active:
             draw_prism((customer.current_x * SQUARE_SIZE, 0, customer.current_y * SQUARE_SIZE),
                        (SQUARE_SIZE, math.ceil(SQUARE_SIZE * 2), SQUARE_SIZE),
-                       (0.0, 0.0, 1.0))
+                       customer.color)
         if customer.picking_rn:
             if customer.active:
                 draw_prism(
@@ -178,7 +187,7 @@ def graphics_procedure(store_map):
             continue
         for i, timestamp in enumerate(customer.timestamps[:-1]):
             if customer.timestamps[i + 1] <= current_time:
-                color = (0.1, 0.89, 0.43)
+                color = tuple([max(0, c - 0.2) for c in customer.color])
             else:
                 color = (0.15, 0.61, 0.94)
             movement = customer.movements[i]
@@ -241,7 +250,8 @@ def graphics_procedure(store_map):
         elif customer.active and not customer.picking_rn:
             draw_semaphore((-470, -210 - 20 * (i + 1)), (39, 158, 242))
             draw_table_text("En ruta", (-440, -210 - 20 * (i + 1)))
-        draw_table_text(customer.customer_id, (-350, -210 - 20 * (i + 1)))
+        draw_table_text(customer.customer_id, (-350, -210 - 20 * (i + 1)), color=(255, 255, 255),
+                        background=tuple([c * 255.0 for c in customer.color]))
         draw_table_text(customer.timestamps[0].strftime("%H:%M:%S"), (-250, -210 - 20 * (i + 1)))
         draw_table_text(customer.timestamps[-1].strftime("%H:%M:%S"), (-120, -210 - 20 * (i + 1)))
         draw_table_text(str(customer.timestamps[-1] - customer.timestamps[0])[:8], (0, -210 - 20 * (i + 1)))
