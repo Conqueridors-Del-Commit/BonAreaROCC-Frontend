@@ -1,6 +1,7 @@
 import csv
 import random
 from datetime import datetime, timedelta
+import tqdm
 
 import OpenGL.GLUT.fonts
 
@@ -16,7 +17,7 @@ alpha_angle = 45.0
 beta_angle = 30.0
 radius = 450
 multi = 0.60
-speed_multipliers = [-500, -100, -10, -1, 1, 10, 100, 500, 1000]
+speed_multipliers = [-500, -100, -10, -1, 1, 10, 50, 100, 500, 1000]
 speed_mult_index = 4
 table_scroll = 0
 pause = False
@@ -45,7 +46,7 @@ def read_path_csv(filename):
                 distinct_customers.append(row['customer_id'])
 
     customers = []
-    for customer_id in distinct_customers:
+    for customer_id in tqdm.tqdm(distinct_customers[:10]):
         with open(filename, "r", errors="ignore", encoding="utf-8") as f:
             reader = csv.DictReader(f, delimiter=";")
 
@@ -91,7 +92,6 @@ def read_representation_csv(filename):
 def read_store_csv(filename):
     with open(filename, "r", errors="ignore", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter=";")
-        grid = []
         max_width = 0
         max_height = 0
         for row in reader:
@@ -99,6 +99,13 @@ def read_store_csv(filename):
                 max_height = int(row['x'])
             if int(row['y']) > max_width:
                 max_width = int(row['y'])
+
+    grid_size = (200, 200)
+    print(grid_size)
+    grid = np.empty(grid_size, dtype=object)
+    with open(filename, "r", errors="ignore", encoding="utf-8") as f:
+        reader = csv.DictReader(f, delimiter=";")
+        for row in reader:
             if row['description'] == "almacen":
                 representation = "a"
             elif row['description'] == "paso":
@@ -115,10 +122,11 @@ def read_store_csv(filename):
                 representation = "j"
             else:
                 representation = "p"
-            grid.append(map.Node(int(row['x']),
-                                 int(row['y']),
-                                 row['description'],
-                                 representation))
+            x, y = int(row['x']), int(row['y'])
+            grid[x, y] = (map.Node(x,
+                                   y,
+                                   row['description'],
+                                   representation))
     storemap = map.Map(max_width, max_height, grid)
     with open(filename, "r", errors="ignore", encoding="utf-8") as f:
         reader = csv.DictReader(f, delimiter=";")
@@ -173,13 +181,13 @@ def graphics_procedure(store_map):
             elif node.representation == "c":
                 height = 1
                 draw_cestas((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
-                                    (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
-                                    color)
+                            (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
+                            color)
             elif node.representation == "j":
                 height = 1
                 draw_prism_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
-                           (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
-                           color, texture="nevera1")
+                                    (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
+                                    color, texture="nevera1")
             else:
                 draw_rectangle_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, 0, SQUARE_SIZE),
                                         color)
@@ -188,8 +196,7 @@ def graphics_procedure(store_map):
             draw_prism((customer.current_x * SQUARE_SIZE, 0, customer.current_y * SQUARE_SIZE),
                        (SQUARE_SIZE, math.ceil(SQUARE_SIZE * 2), SQUARE_SIZE),
                        customer.color)
-        if customer.picking_rn:
-            if customer.active:
+            if customer.picking_rn:
                 draw_prism(
                     (customer.current_pick_x * SQUARE_SIZE, SQUARE_SIZE * 3, customer.current_pick_y * SQUARE_SIZE),
                     (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE),
@@ -199,42 +206,40 @@ def graphics_procedure(store_map):
                      customer.current_pick_y * SQUARE_SIZE + math.floor(SQUARE_SIZE / 4)),
                     (math.floor(SQUARE_SIZE / 2), SQUARE_SIZE * 3, math.floor(SQUARE_SIZE / 2)),
                     (0.0, 1.0, 0.0))
+            for i, timestamp in enumerate(customer.timestamps[:-1]):
+                if customer.timestamps[i + 1] <= current_time:
+                    color = tuple([max(0, c - 0.2) for c in customer.color])
+                else:
+                    color = (0.15, 0.61, 0.94)
+                movement = customer.movements[i]
+                next_movement = customer.movements[i + 1]
+                if movement[1] < next_movement[1]:
+                    draw_prism(
+                        (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
+                         movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                        (math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE),
+                        color)
+                elif movement[1] > next_movement[1]:
+                    draw_prism(
+                        (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
+                         movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4) - SQUARE_SIZE),
+                        (math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4),
+                         SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                        color)
+                elif movement[0] < next_movement[0]:
+                    draw_prism(
+                        (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
+                         movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                        (SQUARE_SIZE, math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4)),
+                        color)
+                elif movement[0] > next_movement[0]:
+                    draw_prism(
+                        (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4) - SQUARE_SIZE, SQUARE_SIZE,
+                         movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
+                        (SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4),
+                         math.ceil(SQUARE_SIZE / 4)),
+                        color)
 
-    # Drawing paths
-    for customer in customers_data:
-        if not customer.active:
-            continue
-        for i, timestamp in enumerate(customer.timestamps[:-1]):
-            if customer.timestamps[i + 1] <= current_time:
-                color = tuple([max(0, c - 0.2) for c in customer.color])
-            else:
-                color = (0.15, 0.61, 0.94)
-            movement = customer.movements[i]
-            next_movement = customer.movements[i + 1]
-            if movement[1] < next_movement[1]:
-                draw_prism(
-                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
-                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
-                    (math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE),
-                    color)
-            elif movement[1] > next_movement[1]:
-                draw_prism(
-                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
-                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4) - SQUARE_SIZE),
-                    (math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
-                    color)
-            elif movement[0] < next_movement[0]:
-                draw_prism(
-                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), SQUARE_SIZE,
-                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
-                    (SQUARE_SIZE, math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4)),
-                    color)
-            elif movement[0] > next_movement[0]:
-                draw_prism(
-                    (movement[0] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4) - SQUARE_SIZE, SQUARE_SIZE,
-                     movement[1] * SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4)),
-                    (SQUARE_SIZE + math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4), math.ceil(SQUARE_SIZE / 4)),
-                    color)
     glLoadIdentity()
 
     word = current_time.strftime('%Y-%m-%d %H:%M:%S')
@@ -255,7 +260,8 @@ def graphics_procedure(store_map):
     draw_header("Nº Tiquet", (100, -200), True)
     draw_header("Cantidad de artículos", (200, -200), True)
 
-    for i, customer in enumerate(customers_data[table_scroll:]):
+    end_index = min(table_scroll + 8, len(customers_data))
+    for i, customer in enumerate(customers_data[table_scroll:end_index]):
         # 4 estats: Espera, En Ruta, Picking, Completat
         if not customer.active and not customer.completed:
             draw_semaphore((-470, -210 - 20 * (i + 1)), (240, 76, 70))
@@ -358,10 +364,10 @@ def idleFunc():
                         if customer.picking[i]:
                             if not customer.picking_rn and speed_multipliers[speed_mult_index] > 0:
                                 customer.picked_articles += 1
-                            customer.picking_rn = True
-                            customer_node = store_map.get_node_by_coordinates(customer.current_x, customer.current_y)
-                            customer.current_pick_x = customer_node.picking_neighbour_x
-                            customer.current_pick_y = customer_node.picking_neighbour_y
+                                customer.picking_rn = True
+                                customer_node = store_map.get_node_by_coordinates(customer.current_x, customer.current_y)
+                                customer.current_pick_x = customer_node.picking_neighbour_x
+                                customer.current_pick_y = customer_node.picking_neighbour_y
                         else:
                             if customer.picking_rn and speed_multipliers[speed_mult_index] < 0:
                                 customer.picked_articles -= 1
