@@ -148,15 +148,13 @@ def graphics_procedure(store_map):
     for x in range(1, store_map.height + 1):
         for y in range(1, store_map.width + 1):
             node = store_map.get_node_by_coordinates(x, y)
-            height = 0
+            color = (1.0, 1.0, 1.0)
             if node.representation == "a":
-                color = (0.2, 0.2, 0.2)
                 height = 2
                 draw_prism_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
                                     (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
                                     color, texture='armari')
             elif node.representation == "p":
-                color = (0.5, 0.1, 0.1)
                 height = 2
                 if representation_mapping[node.type] != "congelats":
                     draw_armari((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
@@ -164,26 +162,22 @@ def graphics_procedure(store_map):
                                 color, front_texture=representation_mapping[node.type])
                 else:
                     draw_congelats((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
-                                (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE),
-                                color, front_texture=representation_mapping[node.type])
+                                   (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE),
+                                   color)
             elif node.representation == "e":
-                color = (0.1, 0.1, 0.9)
                 draw_rectangle_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, 0, SQUARE_SIZE),
-                                        color)
+                                        color, texture='escales')
             elif node.representation == "c":
-                color = (0.9, 0.1, 0.1)
+                height = 1
+                draw_cestas((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
+                                    (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
+                                    color)
+            elif node.representation == "j":
                 height = 1
                 draw_prism_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
-                                    (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
-                                    color, texture='armari')
-            elif node.representation == "j":
-                color = (0.1, 0.9, 0.1)
-                height = 1
-                draw_prism((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
                            (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
-                           color)
+                           color, texture="nevera1")
             else:
-                color = (0.9, 0.9, 0.9)
                 draw_rectangle_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, 0, SQUARE_SIZE),
                                         color)
     for customer in customers_data:

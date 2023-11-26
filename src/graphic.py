@@ -284,7 +284,7 @@ def draw_armari(coordinates, size, color, front_texture='llet'):
     glBindTexture(GL_TEXTURE_2D, 0)
 
 
-def draw_congelats(coordinates, size, color, front_texture='llet'):
+def draw_congelats(coordinates, size, color):
     x, y, z = coordinates
     width, height, depth = size
     r, g, b = color
@@ -304,6 +304,95 @@ def draw_congelats(coordinates, size, color, front_texture='llet'):
     glEnd()
 
     glBindTexture(GL_TEXTURE_2D, TEXTURES['nevera1'])
+
+    # Quadrat 1
+    glBegin(GL_QUADS)
+    glColor3f(r, g, b)
+    glTexCoord2f(0, 0)
+    glVertex3i(x + width - XOFFSET, y + height, z - ZOFFSET)
+    glTexCoord2f(1, 0)
+    glVertex3i(x + width - XOFFSET, y + height, z + depth - ZOFFSET)
+    darker_color(color)
+    glTexCoord2f(1, 1)
+    glVertex3i(x + width - XOFFSET, y, z + depth - ZOFFSET)
+    glTexCoord2f(0, 1)
+    glVertex3i(x + width - XOFFSET, y, z - ZOFFSET)
+    glColor3f(r, g, b)
+    glEnd()
+
+    # Quadrat 5
+    glNormal3f(0, 0, 1)
+    glBegin(GL_QUADS)
+    darker_color(color)
+    glTexCoord2f(0, 0)
+    glVertex3i(x + width - XOFFSET, y, z + depth - ZOFFSET)
+    glColor3f(r, g, b)
+    glTexCoord2f(1, 0)
+    glVertex3i(x + width - XOFFSET, y + height, z + depth - ZOFFSET)
+    glTexCoord2f(1, 1)
+    glVertex3i(x - XOFFSET, y + height, z + depth - ZOFFSET)
+    darker_color(color)
+    glTexCoord2f(0, 1)
+    glVertex3i(x - XOFFSET, y, z + depth - ZOFFSET)
+    glColor3f(r, g, b)
+    glEnd()
+
+    # Quadrat 2
+    glNormal3f(-1, 0, 0)
+    glBegin(GL_QUADS)
+    darker_color(color)
+    glTexCoord2f(0, 0)
+    glVertex3i(x - XOFFSET, y, z + depth - ZOFFSET)
+    glColor3f(r, g, b)
+    glTexCoord2f(1, 0)
+    glVertex3i(x - XOFFSET, y + height, z + depth - ZOFFSET)
+    glTexCoord2f(1, 1)
+    glVertex3i(x - XOFFSET, y + height, z - ZOFFSET)
+    darker_color(color)
+    glTexCoord2f(0, 1)
+    glVertex3i(x - XOFFSET, y, z - ZOFFSET)
+    glColor3f(r, g, b)
+    glEnd()
+
+    # Quadrat 3
+    glNormal3f(0, 0, -1)
+    glBegin(GL_QUADS)
+    darker_color(color)
+    glTexCoord2f(0, 0)
+    glVertex3i(x - XOFFSET, y, z - ZOFFSET)
+    glColor3f(r, g, b)
+    glTexCoord2f(1, 0)
+    glVertex3i(x - XOFFSET, y + height, z - ZOFFSET)
+    glTexCoord2f(1, 1)
+    glVertex3i(x - XOFFSET + width, y + height, z - ZOFFSET)
+    darker_color(color)
+    glTexCoord2f(0, 1)
+    glVertex3i(x - XOFFSET + width, y, z - ZOFFSET)
+    glColor3f(r, g, b)
+    glEnd()
+    glBindTexture(GL_TEXTURE_2D, 0)
+
+
+def draw_cestas(coordinates, size, color):
+    x, y, z = coordinates
+    width, height, depth = size
+    r, g, b = color
+    glColor3f(r, g, b)
+    glBindTexture(GL_TEXTURE_2D, TEXTURES['cistella_top'])
+
+    glNormal3f(0, 1, 0)
+    glBegin(GL_QUADS)
+    glTexCoord2f(0, 0)
+    glVertex3i(x - XOFFSET, y + height, z + depth - ZOFFSET)
+    glTexCoord2f(1, 0)
+    glVertex3i(x + width - XOFFSET, y + height, z + depth - ZOFFSET)
+    glTexCoord2f(1, 1)
+    glVertex3i(x + width - XOFFSET, y + height, z - ZOFFSET)
+    glTexCoord2f(0, 1)
+    glVertex3i(x - XOFFSET, y + height, z - ZOFFSET)
+    glEnd()
+
+    glBindTexture(GL_TEXTURE_2D, TEXTURES['cistella_side'])
 
     # Quadrat 1
     glBegin(GL_QUADS)
@@ -504,8 +593,8 @@ def init_texture(filepath: str):
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST)
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
-    # glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
+    # glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE)
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, img.width, img.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, img_data)
     return txt
 
@@ -526,6 +615,9 @@ def init_graphics():
     TEXTURES['nevera1'] = init_texture("textures/nevera_1.png")
     TEXTURES['nevera2'] = init_texture("textures/nevera_2.png")
     TEXTURES['congelats'] = init_texture("textures/congelats_top.png")
+    TEXTURES['escales'] = init_texture("textures/escales.png")
+    TEXTURES['cistella_top'] = init_texture("textures/cistella_top.png")
+    TEXTURES['cistella_side'] = init_texture("textures/cistella_side.png")
     for file in glob.glob("textures/*_front.png"):
         name = file.replace("textures/", "").replace("_front.png", "")
         TEXTURES[name] = init_texture(file)
