@@ -372,9 +372,9 @@ def idleFunc():
 
 
 if __name__ in "__main__":
-    customers_data = read_path_csv('output_utf.csv')
+    customers_data = read_path_csv(sys.argv[1])
     store_map = read_store_csv('planogram_utf.csv')
-    representations = read_representation_csv('planogram_to_representation.csv')
+    read_representation_csv('planogram_to_representation.csv')
     t = 0
     last_update = 0
     current_time = convert_to_datetime('2023-11-02 09:00:00')
