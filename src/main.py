@@ -21,6 +21,8 @@ speed_mult_index = 4
 table_scroll = 0
 pause = False
 
+representation_mapping = {}
+
 
 def convert_to_datetime(date_string):
     try:
@@ -62,7 +64,7 @@ def read_path_csv(filename):
                     else:
                         picking.append(False)
                     timestamps.append(convert_to_datetime(r['x_y_date_time']))
-            color_index = random.randint(0, len(colors_list_normalised))
+            color_index = random.randint(0, len(colors_list_normalised) - 1)
             color = colors_list_normalised[color_index]
             colors_list_normalised.pop(color_index)
             customers.append(Customer(customer_id,
@@ -73,6 +75,14 @@ def read_path_csv(filename):
                                       total_articles=len(total_articles),
                                       color=color))
     return customers
+
+
+def read_representation_csv(filename):
+    global representation_mapping
+    with open(filename, "r", errors="ignore", encoding="utf-8") as f:
+        reader = csv.DictReader(f, delimiter=";")
+        for row in reader:
+            representation_mapping[row['description']] = row['texture']
 
 
 def read_store_csv(filename):
@@ -142,28 +152,40 @@ def graphics_procedure(store_map):
             if node.representation == "a":
                 color = (0.2, 0.2, 0.2)
                 height = 2
+                draw_prism_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
+                                    (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
+                                    color, texture='armari')
             elif node.representation == "p":
                 color = (0.5, 0.1, 0.1)
                 height = 2
+                if representation_mapping[node.type] != "congelats":
+                    draw_armari((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
+                                (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
+                                color, front_texture=representation_mapping[node.type])
+                else:
+                    draw_congelats((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
+                                (SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE),
+                                color, front_texture=representation_mapping[node.type])
             elif node.representation == "e":
                 color = (0.1, 0.1, 0.9)
-                height = 0
+                draw_rectangle_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, 0, SQUARE_SIZE),
+                                        color)
             elif node.representation == "c":
                 color = (0.9, 0.1, 0.1)
                 height = 1
+                draw_prism_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
+                                    (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
+                                    color, texture='armari')
             elif node.representation == "j":
                 color = (0.1, 0.9, 0.1)
                 height = 1
-            else:
-                color = (0.9, 0.9, 0.9)
-                height = 0
-            if height != 0:
                 draw_prism((x * SQUARE_SIZE, 0, y * SQUARE_SIZE),
                            (SQUARE_SIZE, SQUARE_SIZE * height, SQUARE_SIZE),
                            color)
             else:
-                draw_rectangle((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, 0, SQUARE_SIZE),
-                               color)
+                color = (0.9, 0.9, 0.9)
+                draw_rectangle_textured((x * SQUARE_SIZE, 0, y * SQUARE_SIZE), (SQUARE_SIZE, 0, SQUARE_SIZE),
+                                        color)
     for customer in customers_data:
         if customer.active:
             draw_prism((customer.current_x * SQUARE_SIZE, 0, customer.current_y * SQUARE_SIZE),
@@ -358,6 +380,7 @@ def idleFunc():
 if __name__ in "__main__":
     customers_data = read_path_csv('output_utf.csv')
     store_map = read_store_csv('planogram_utf.csv')
+    representations = read_representation_csv('planogram_to_representation.csv')
     t = 0
     last_update = 0
     current_time = convert_to_datetime('2023-11-02 09:00:00')
